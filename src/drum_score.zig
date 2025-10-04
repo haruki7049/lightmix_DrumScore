@@ -2,6 +2,8 @@ const std = @import("std");
 const lightmix = @import("lightmix");
 const Self = @This();
 
+const Wave = lightmix.Wave;
+
 allocator: std.mem.Allocator,
 sample_rate: usize,
 channels: usize,
@@ -38,20 +40,26 @@ pub fn register(self: *Self, notes: []const []const f32) void {
     self.notes = owned_notes;
 }
 
-pub fn finalize(self: *Self) []f32 {
-    if (self.notes.len == 0) return &[_]f32{};
-
+pub fn finalize(self: *Self) Wave {
     const note_len = self.notes[0].len;
     const total_len = note_len + (self.notes.len - 1) * self.samples_per_score;
-    const result = self.allocator.alloc(f32, total_len) catch @panic("Out of memory");
-    @memset(result, 0);
+
+    const data: []f32 = self.allocator.alloc(f32, total_len) catch @panic("Out of memory");
+    defer self.allocator.free(data);
+    @memset(data, 0);
 
     for (self.notes, 0..) |note, i| {
         const offset = i * self.samples_per_score;
         for (note, 0..) |sample, j| {
-            result[offset + j] += sample;
+            data[offset + j] += sample;
         }
     }
+
+    const result: Wave = Wave.init(data, self.allocator, .{
+        .sample_rate = self.sample_rate,
+        .channels = self.channels,
+        .bits = self.bits,
+    });
 
     return result;
 }
@@ -114,8 +122,8 @@ test "finalize" {
         &[_]f32{ 1.0, 1.0, 1.0 },
     });
 
-    const mixed = score.finalize();
-    defer allocator.free(mixed);
+    const mixed: Wave = score.finalize();
+    defer mixed.deinit();
 
-    try std.testing.expectEqualSlices(f32, mixed, &[_]f32{ 1.0, 2.0, 3.0, 2.0, 1.0 });
+    try std.testing.expectEqualSlices(f32, mixed.data, &[_]f32{ 1.0, 2.0, 3.0, 2.0, 1.0 });
 }
