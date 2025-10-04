@@ -32,6 +32,7 @@
 
             # Zig
             programs.zig.enable = true;
+            settings.formatter.zig.command = lib.getExe pkgs.zig_0_14;
 
             # GitHub Actions
             programs.actionlint.enable = true;
