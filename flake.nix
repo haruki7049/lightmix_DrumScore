@@ -30,21 +30,14 @@
             # Nix
             programs.nixfmt.enable = true;
 
-            # Rust
+            # Zig
             programs.zig.enable = true;
-
-            # TOML
-            programs.taplo.enable = true;
 
             # GitHub Actions
             programs.actionlint.enable = true;
 
             # Markdown
             programs.mdformat.enable = true;
-
-            # ShellScript
-            programs.shellcheck.enable = true;
-            programs.shfmt.enable = true;
           };
 
           devShells.default = pkgs.mkShell {
