@@ -1,7 +1,7 @@
 .{
-    .name = .lightmix_template,
+    .name = .lightmix_drum_score,
     .version = "0.0.0",
-    .fingerprint = 0xf08dce35c6831b8e,
+    .fingerprint = 0xa12a63015c721b6d,
     .minimum_zig_version = "0.14.1",
 
     .dependencies = .{
