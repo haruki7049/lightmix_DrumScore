@@ -19,6 +19,7 @@ pub fn main() !void {
         &generate_sinewave_data(),
         &generate_sinewave_data(),
         &generate_sinewave_data(),
+        &generate_sinewave_data(),
     });
 
     const mixed: Wave = score.finalize().filter(normalize);
@@ -32,7 +33,7 @@ pub fn main() !void {
 
 fn generate_sinewave_data() [22050]f32 {
     const c_5: f32 = 523.251;
-    const volume: f32 = 1.0;
+    const initial_volume: f32 = 1.0;
     const sample_rate: f32 = 44100.0;
     const radins_per_sec: f32 = c_5 * 2.0 * std.math.pi;
 
@@ -40,7 +41,11 @@ fn generate_sinewave_data() [22050]f32 {
     var i: usize = 0;
 
     while (i < result.len) : (i += 1) {
-        result[i] = std.math.sin(@as(f32, @floatFromInt(i)) * radins_per_sec / sample_rate) * volume;
+        const progress = @as(f32, @floatFromInt(i)) / @as(f32, @floatFromInt(result.len));
+        const current_volume = initial_volume * (1.0 - progress);
+
+        const sin_value = std.math.sin(@as(f32, @floatFromInt(i)) * radins_per_sec / sample_rate);
+        result[i] = sin_value * current_volume;
     }
 
     return result;
