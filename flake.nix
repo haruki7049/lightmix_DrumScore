@@ -32,7 +32,7 @@
 
             # Zig
             programs.zig.enable = true;
-            settings.formatter.zig.command = lib.getExe pkgs.zig_0_14;
+            settings.formatter.zig.command = lib.getExe pkgs.zig_0_15;
 
             # GitHub Actions
             programs.actionlint.enable = true;
@@ -44,7 +44,7 @@
           devShells.default = pkgs.mkShell {
             nativeBuildInputs = [
               # Compiler
-              pkgs.zig_0_14
+              pkgs.zig_0_15
 
               # C library manager
               pkgs.pkg-config

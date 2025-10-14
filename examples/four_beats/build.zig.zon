@@ -2,15 +2,15 @@
     .name = .four_beats,
     .version = "0.0.0",
     .fingerprint = 0xfa76a89f699fc3f7,
-    .minimum_zig_version = "0.14.1",
+    .minimum_zig_version = "0.15.1",
 
     .dependencies = .{
         .lightmix_drum_score = .{
             .path = "../..",
         },
         .lightmix = .{
-            .url = "https://github.com/haruki7049/lightmix/archive/refs/tags/0.3.1.tar.gz",
-            .hash = "lightmix-0.3.1-SpCovHnUAQC4jIi5t2JOPom9ToVKje-qJfvwc4EcPeze",
+            .url = "https://github.com/haruki7049/lightmix/archive/refs/tags/0.4.0.tar.gz",
+            .hash = "lightmix-0.3.1-SpCovMHWAQAjtU7E26CCP0zZg_IAbEFdD_QVErfEdLb3",
         },
     },
 

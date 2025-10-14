@@ -52,7 +52,7 @@ fn generate_sinewave_data() [22050]f32 {
 }
 
 fn normalize(original_wave: Wave) !Wave {
-    var result = std.ArrayList(f32).init(original_wave.allocator);
+    var result: std.array_list.Aligned(f32, null) = .empty;
 
     var max_volume: f32 = 0.0;
     for (original_wave.data) |sample| {
@@ -64,11 +64,11 @@ fn normalize(original_wave: Wave) !Wave {
         const volume: f32 = 1.0 / max_volume;
 
         const new_sample: f32 = sample * volume;
-        try result.append(new_sample);
+        try result.append(original_wave.allocator, new_sample);
     }
 
     return Wave{
-        .data = try result.toOwnedSlice(),
+        .data = try result.toOwnedSlice(original_wave.allocator),
         .allocator = original_wave.allocator,
 
         .sample_rate = original_wave.sample_rate,
