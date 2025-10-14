@@ -18,8 +18,7 @@ pub fn main() !void {
     score.register(&[_][]const f32{
         &generate_sinewave_data(),
         &generate_sinewave_data(),
-        //&generate_sinewave_data(),
-        //&generate_sinewave_data(),
+        &generate_sinewave_data(),
     });
 
     const mixed: Wave = score.finalize().filter(normalize);
@@ -31,13 +30,13 @@ pub fn main() !void {
     try mixed.write(file);
 }
 
-fn generate_sinewave_data() [44100]f32 {
+fn generate_sinewave_data() [22050]f32 {
     const c_5: f32 = 523.251;
     const volume: f32 = 1.0;
     const sample_rate: f32 = 44100.0;
     const radins_per_sec: f32 = c_5 * 2.0 * std.math.pi;
 
-    var result: [44100]f32 = undefined;
+    var result: [22050]f32 = undefined;
     var i: usize = 0;
 
     while (i < result.len) : (i += 1) {

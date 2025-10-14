@@ -41,8 +41,21 @@ pub fn register(self: *Self, notes: []const []const f32) void {
 }
 
 pub fn finalize(self: *Self) Wave {
-    const note_len = self.notes[0].len;
-    const total_len = note_len + (self.notes.len - 1) * self.samples_per_score;
+    if (self.notes.len == 0) {
+        const empty_data = self.allocator.alloc(f32, 0) catch @panic("Out of memory");
+        return Wave.init(empty_data, self.allocator, .{
+            .sample_rate = self.sample_rate,
+            .channels = self.channels,
+            .bits = self.bits,
+        });
+    }
+
+    var total_len: usize = 0;
+    for (self.notes, 0..) |note, i| {
+        const end_pos = i * self.samples_per_score + note.len;
+        if (end_pos > total_len)
+            total_len = end_pos;
+    }
 
     const data: []f32 = self.allocator.alloc(f32, total_len) catch @panic("Out of memory");
     defer self.allocator.free(data);
