@@ -1,4 +1,4 @@
-# lightmix\_DrumScore
+# lightmix_DrumScore
 
 ## Versions
 

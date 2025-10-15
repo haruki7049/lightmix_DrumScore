@@ -34,9 +34,6 @@
             programs.zig.enable = true;
             settings.formatter.zig.command = lib.getExe pkgs.zig_0_15;
 
-            # GitHub Actions
-            programs.actionlint.enable = true;
-
             # Markdown
             programs.mdformat.enable = true;
           };
