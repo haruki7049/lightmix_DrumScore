@@ -9,7 +9,7 @@ sample_rate: usize,
 channels: usize,
 bits: usize,
 samples_per_score: usize,
-notes: [][]const f32,
+notes: []const Wave,
 
 const initOptions = struct {
     sample_rate: usize,
@@ -25,7 +25,7 @@ pub fn init(allocator: std.mem.Allocator, options: initOptions) Self {
         .channels = options.channels,
         .bits = options.bits,
         .samples_per_score = options.samples_per_score,
-        .notes = &[_][]const f32{},
+        .notes = &[_]Wave{},
     };
 }
 
@@ -33,8 +33,8 @@ pub fn deinit(self: Self) void {
     self.allocator.free(self.notes);
 }
 
-pub fn register(self: *Self, notes: []const []const f32) void {
-    const owned_notes = self.allocator.alloc([]const f32, notes.len) catch @panic("Out of memory");
+pub fn register(self: *Self, notes: []const Wave) void {
+    const owned_notes = self.allocator.alloc(Wave, notes.len) catch @panic("Out of memory");
     @memcpy(owned_notes, notes);
 
     self.notes = owned_notes;
@@ -52,7 +52,7 @@ pub fn finalize(self: *Self) Wave {
 
     var total_len: usize = 0;
     for (self.notes, 0..) |note, i| {
-        const end_pos = i * self.samples_per_score + note.len;
+        const end_pos = i * self.samples_per_score + note.data.len;
         if (end_pos > total_len)
             total_len = end_pos;
     }
@@ -63,7 +63,7 @@ pub fn finalize(self: *Self) Wave {
 
     for (self.notes, 0..) |note, i| {
         const offset = i * self.samples_per_score;
-        for (note, 0..) |sample, j| {
+        for (note.data, 0..) |sample, j| {
             data[offset + j] += sample;
         }
     }
@@ -108,15 +108,27 @@ test "register" {
     });
     defer score.deinit();
 
-    score.register(&[_][]const f32{
-        &[_]f32{ 1.0, 1.0, 1.0 },
-        &[_]f32{ 1.0, 1.0, 1.0 },
-        &[_]f32{ 1.0, 1.0, 1.0 },
+    const wave: Wave = three_floats_wave(allocator, 44100, 1, 16);
+    defer wave.deinit();
+
+    score.register(&[_]Wave{
+        wave,
+        wave,
+        wave,
     });
 
-    try std.testing.expectEqualSlices(f32, score.notes[0], &[_]f32{ 1.0, 1.0, 1.0 });
-    try std.testing.expectEqualSlices(f32, score.notes[1], &[_]f32{ 1.0, 1.0, 1.0 });
-    try std.testing.expectEqualSlices(f32, score.notes[2], &[_]f32{ 1.0, 1.0, 1.0 });
+    try std.testing.expectEqualSlices(f32, score.notes[0].data, &[_]f32{ 1.0, 1.0, 1.0 });
+    try std.testing.expectEqualSlices(f32, score.notes[1].data, &[_]f32{ 1.0, 1.0, 1.0 });
+    try std.testing.expectEqualSlices(f32, score.notes[2].data, &[_]f32{ 1.0, 1.0, 1.0 });
+}
+
+fn three_floats_wave(allocator: std.mem.Allocator, sample_rate: usize, channels: usize, bits: usize) Wave {
+    const data: []const f32 = &[_]f32{ 1.0, 1.0, 1.0 };
+    return Wave.init(data, allocator, .{
+        .sample_rate = sample_rate,
+        .channels = channels,
+        .bits = bits,
+    });
 }
 
 test "finalize" {
@@ -129,10 +141,13 @@ test "finalize" {
     });
     defer score.deinit();
 
-    score.register(&[_][]const f32{
-        &[_]f32{ 1.0, 1.0, 1.0 },
-        &[_]f32{ 1.0, 1.0, 1.0 },
-        &[_]f32{ 1.0, 1.0, 1.0 },
+    const wave: Wave = three_floats_wave(allocator, 44100, 1, 16);
+    defer wave.deinit();
+
+    score.register(&[_]Wave{
+        wave,
+        wave,
+        wave,
     });
 
     const mixed: Wave = score.finalize();

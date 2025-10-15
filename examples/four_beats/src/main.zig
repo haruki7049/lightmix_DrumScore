@@ -2,11 +2,12 @@ const std = @import("std");
 const lightmix = @import("lightmix");
 const lightmix_drum_score = @import("lightmix_drum_score");
 
-const allocator = std.heap.page_allocator;
 const Wave = lightmix.Wave;
 const DrumScore = lightmix_drum_score.DrumScore;
 
 pub fn main() !void {
+    const allocator = std.heap.page_allocator;
+
     var score: DrumScore = DrumScore.init(allocator, .{
         .sample_rate = 44100,
         .channels = 1,
@@ -15,11 +16,22 @@ pub fn main() !void {
     });
     defer score.deinit();
 
-    score.register(&[_][]const f32{
-        &generate_sinewave_data(),
-        &generate_sinewave_data(),
-        &generate_sinewave_data(),
-        &generate_sinewave_data(),
+    const sinewave: Wave = Sinewave.generate(allocator, .{
+        .sample_rate = 44100,
+        .channels = 1,
+        .bits = 16,
+
+        .frequency = 440.0,
+        .initial_volume = 1.0,
+        .length = 22050,
+    });
+    defer sinewave.deinit();
+
+    score.register(&[_]Wave{
+        sinewave,
+        sinewave,
+        sinewave,
+        sinewave,
     });
 
     const mixed: Wave = score.finalize().filter(normalize);
@@ -31,25 +43,43 @@ pub fn main() !void {
     try mixed.write(file);
 }
 
-fn generate_sinewave_data() [22050]f32 {
-    const c_5: f32 = 523.251;
-    const initial_volume: f32 = 1.0;
-    const sample_rate: f32 = 44100.0;
-    const radins_per_sec: f32 = c_5 * 2.0 * std.math.pi;
+const Sinewave = struct {
+    const initOptions = struct {
+        sample_rate: usize,
+        channels: usize,
+        bits: usize,
 
-    var result: [22050]f32 = undefined;
-    var i: usize = 0;
+        frequency: f32,
+        initial_volume: f32,
+        length: usize,
+    };
 
-    while (i < result.len) : (i += 1) {
-        const progress = @as(f32, @floatFromInt(i)) / @as(f32, @floatFromInt(result.len));
-        const current_volume = initial_volume * (1.0 - progress);
-
-        const sin_value = std.math.sin(@as(f32, @floatFromInt(i)) * radins_per_sec / sample_rate);
-        result[i] = sin_value * current_volume;
+    fn generate(allocator: std.mem.Allocator, options: initOptions) Wave {
+        const data: []const f32 = generate_sinewave_data(allocator, options);
+        return Wave.init(data, allocator, .{
+            .sample_rate = options.sample_rate,
+            .channels = options.channels,
+            .bits = options.bits,
+        });
     }
 
-    return result;
-}
+    fn generate_sinewave_data(allocator: std.mem.Allocator, options: initOptions) []f32 {
+        const radins_per_sec: f32 = options.frequency * 2.0 * std.math.pi;
+
+        var result: []f32 = allocator.alloc(f32, options.length) catch @panic("Out of memory");
+        var i: usize = 0;
+
+        while (i < result.len) : (i += 1) {
+            const progress = @as(f32, @floatFromInt(i)) / @as(f32, @floatFromInt(result.len));
+            const current_volume = options.initial_volume * (1.0 - progress);
+
+            const sin_value = std.math.sin(@as(f32, @floatFromInt(i)) * radins_per_sec / @as(f32, @floatFromInt(options.sample_rate)));
+            result[i] = sin_value * current_volume;
+        }
+
+        return result;
+    }
+};
 
 fn normalize(original_wave: Wave) !Wave {
     var result: std.array_list.Aligned(f32, null) = .empty;
